@@ -10,9 +10,9 @@ git merge origin/main
 
 # dependency
 
-sudo apt install ros-humble-joint-state-publisher-gui
-
-sudo apt install ros-humble-xacro
+ros-humble-joint-state-publisher-gui
+ros-humble-xacro
+ros-rolling-ros2-controllers
 
 # workspace
 
