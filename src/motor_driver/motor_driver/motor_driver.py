@@ -16,7 +16,7 @@ class MinimalSubscriber(Node):
 
     def __init__(self):
         super().__init__('motor_subscriber')
-        self.arduino = serial.Serial(port='/dev/ttyACM0', baudrate=9600, timeout=.1) 
+        self.arduino = serial.Serial(port='/dev/ttyACM0', baudrate=115200, timeout=.1) 
         print('\nStatus -> ',self.arduino)
 
         self.subscription = self.create_subscription(
@@ -47,7 +47,7 @@ class MinimalSubscriber(Node):
 
 	       #num = input("Enter a number: ") # Taking input from user 
 	       #value = write_read(num) 
-        print("gheaga") 
+        #print("gheaga") 
         print(self.package) # printing the value 
 
 
