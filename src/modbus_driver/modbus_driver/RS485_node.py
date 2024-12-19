@@ -21,7 +21,7 @@ class MinimalPublisher(Node):
         self.encoderB = minimalmodbus.Instrument('/dev/ttyUSB0', 81)  # port name, slave address (in decimal)
         self.encInnit(self.encoderB)
 
-        self.publisher_ = self.create_publisher(Float64MultiArray, 'topic', 10)
+        self.publisher_ = self.create_publisher(Float64MultiArray, 'encoder', 10)
         timer_period = 0.01  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
