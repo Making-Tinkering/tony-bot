@@ -13,6 +13,9 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('encoder_publisher')
+    
+        self.baseLength = 0.3    
+        
         self.encoderA = minimalmodbus.Instrument('/dev/ttyUSB0', 80)  # port name, slave address (in decimal)
         self.encInnit(self.encoderA)
         self.encoderB = minimalmodbus.Instrument('/dev/ttyUSB0', 81)  # port name, slave address (in decimal)
@@ -21,8 +24,8 @@ class MinimalPublisher(Node):
         self.publisher_ = self.create_publisher(Int64MultiArray, 'topic', 10)
         timer_period = 0.01  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.val = []
-        self.i = 0
+
+    
 
     def encInnit(self, instrument):
         instrument.serial.baudrate = 9600         # Baud
@@ -33,21 +36,71 @@ class MinimalPublisher(Node):
         instrument.address                         # this is the slave address number
         instrument.mode = minimalmodbus.MODE_RTU   # rtu or ascii mode
         instrument.clear_buffers_before_each_transaction = True
+        self.resetEnc(instrument)
         
+
+
+    def resetEnc(self, instrument):
+        unlock_register = 0x0069
+        unlock_value = 0xB588
+        instrument.write_register(unlock_register, unlock_value, functioncode=6)
+        print("Encoder unlocked successfully.")
+
+        angle_register = 0x0011
+        angle_value = 0x0000  # Value for 0°
+        instrument.write_register(angle_register, angle_value, functioncode=6) 
+        print(f'Angle successfully set to {int(angle_value,16)}')
+        print(instrument.read_register(angle_register, functioncode=3))
+        revolutions_register = 0x0012
+        revolutions_value = 0x0000 # Set revolutions to 0 
+        instrument.write_register(revolutions_register, revolutions_value, functioncode=6) 
+        print("Revolutions set to 0 successfully.")
+        read_revolutions = instrument.read_register(revolutions_register, functioncode=3) 
+        print(f"Revolutions value read back: {read_revolutions}")
+
+
+
+
+    def writeEnc(self, instrument, regName, register, payload):
+        unlock_register = 0x0069
+        unlock_value = 0xB588
+        instrument.write_register(unlock_register, unlock_value, functioncode=6)
+        print("Encoder unlocked successfully.")
+
+        instrument.write_register(register, payload, functioncode=6) 
+        print(f'{regName' successfully set to {int(payload,16)}')
+        print(instrument.read_register(register, functioncode=3))
+
+    def encToAngle(self, angle, revolutions):
+        
+        return ((angle / 360) + revolutions) * self.baseLength
+
+
+    def self.calDistance(self)
+        val = []
+        #EncoderA
+        angleA = self.encoderA.read_register(17, 0)
+        revA = self.encoderA.read_register(18, 0)
+        val.append(angleA) 
+        val.append(revA)  
+        val.append(self.encToAngle(angleA, revA)
+        #EncoderB
+        angleB = self.encoderB.read_register(17, 0)
+        revB = self.encoderB.read_register(18, 0)
+        val.append(angleB) 
+        val.append(revB)  
+        val.append(self.encToAngle(angleB, revB)
+        return val
 
     def timer_callback(self):
         msg = Int64MultiArray()
 
-        self.val.append(self.encoderA.read_register(17, 0))  # Registernumber, number of decimals
-        self.val.append(self.encoderA.read_register(18, 0))  # Registernumber, number of decimals
-        self.val.append(self.encoderB.read_register(17, 0))  # Registernumber, number of decimals
-        self.val.append(self.encoderB.read_register(18, 0))  # Registernumber, number of decimals
-        msg.data = self.val
+        msg.data = self.calDistance()
 
-        print(self.val)
+        print(msg.data)
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.val = []
+
 
 
 def main(args=None):
