@@ -14,7 +14,7 @@ class MinimalPublisher(Node):
     def __init__(self):
         super().__init__('encoder_publisher')
     
-        self.baseLength = 0.3    
+        self.baseLength = 0.2 
         
         self.encoderA = minimalmodbus.Instrument('/dev/ttyUSB0', 80)  # port name, slave address (in decimal)
         self.encInnit(self.encoderA)

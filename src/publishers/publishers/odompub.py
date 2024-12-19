@@ -12,28 +12,33 @@ import numpy as np # Scientific computing library for Python
 class OdometryPublisher(Node):
     def __init__(self):
         super().__init__('odometry_publisher')
-        self.publisher_ = self.create_publisher(Odometry, 'odom', 10)
+        self.odomPublisher_ = self.create_publisher(Odometry, 'odom', 10)
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.publish_odometry)
         
 
-        self.subscription = self.create_subscription(
+        self.cmdSubscription = self.create_subscription(
                 Twist,
                 '/cmd_vel',
-                self.listener_callback,
+                self.cmd_callback,
                 10)
-        self.subscription  # prevent unused variable warning
+        self.cmdSubscription  # prevent unused variable warning
+
+        self.encSubscription = self.create_subscription(
+                Twist,
+                '/encoder',
+                self.enc_callback,
+                10)
+        self.encSubscription  # prevent unused variable warning
         
         self.linearVel = 0.0
         self.angularVel = 0.0
         #Hardware measurements
-        self.baseDistance = 0.3                                     #distance between wheels in metres
+        self.baseDistance = 0.2                                    #distance between wheels in metres
         self.baseHalf = self.baseDistance / 2
         self.wheelDiameter = 0.15                                   #diameter of wheel
         self.wheelRadius = self.wheelDiameter / 2
         self.distPerRev = self.wheelDiameter*math.pi                #dist per rev of wheel
-        self.encResolution = 4096                                   #resolution of encoder
-        self.sumEnc = self.encResolution * 4                        #total pulses per rev of encoder
         self.rateEnc = (2 * math.pi *self.wheelRadius) / self.sumEnc
         self.oldLeftD = 0.0
         self.oldrightD = 0.0
@@ -42,13 +47,18 @@ class OdometryPublisher(Node):
         self.wTheta = 0.0
         self.get_quaternion_from_euler(0.0,0.0,0.0)
 
-    def listener_callback(self, msg):
+    def cmd_callback(self, msg):
         self.linearVel = msg.linear.x
         self.angularVel = msg.angular.z
         #self.get_logger().info(f'I heard: {self.linearVel} and {self.angularVel}')
         self.calculate_odom(0.0,0.0)
         #print(msg)
         
+    def enc_callback(self, msg):
+        distanceA = msg.data[2]
+        distanceB = msg.data[5]
+        self.calculate_odom(distanceA, distanceB)
+
     def get_quaternion_from_euler(self, roll, pitch, yaw):
         self.qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         self.qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
@@ -88,7 +98,7 @@ class OdometryPublisher(Node):
         
         msg.twist.twist.linear.x = self.linearVel
         msg.twist.twist.angular.z = self.angularVel
-        self.publisher_.publish(msg)
+        self.odomPublisher_.publish(msg)
         #print(msg)
 
 def main(args=None):
