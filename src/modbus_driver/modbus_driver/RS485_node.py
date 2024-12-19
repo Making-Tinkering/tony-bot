@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int64MultiArray
+from std_msgs.msg import Float64MultiArray
 
 import minimalmodbus
 import serial
@@ -21,7 +21,7 @@ class MinimalPublisher(Node):
         self.encoderB = minimalmodbus.Instrument('/dev/ttyUSB0', 81)  # port name, slave address (in decimal)
         self.encInnit(self.encoderB)
 
-        self.publisher_ = self.create_publisher(Int64MultiArray, 'topic', 10)
+        self.publisher_ = self.create_publisher(Float64MultiArray, 'topic', 10)
         timer_period = 0.01  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -47,9 +47,9 @@ class MinimalPublisher(Node):
         print("Encoder unlocked successfully.")
 
         angle_register = 0x0011
-        angle_value = 0x0000  # Value for 0°
+        angle_value = 0x0010  # Value for 0°
         instrument.write_register(angle_register, angle_value, functioncode=6) 
-        print(f'Angle successfully set to {int(angle_value,16)}')
+        print('Angle successfully set to 0')
         print(instrument.read_register(angle_register, functioncode=3))
         revolutions_register = 0x0012
         revolutions_value = 0x0000 # Set revolutions to 0 
@@ -68,11 +68,10 @@ class MinimalPublisher(Node):
         print("Encoder unlocked successfully.")
 
         instrument.write_register(register, payload, functioncode=6) 
-        print(f'{regName} successfully set to {int(payload,16)}')
         print(instrument.read_register(register, functioncode=3))
 
-    def encToAngle(self, angle, revolutions):
-        
+    def encToAngle(self, angle_raw, revolutions):
+        angle = angle_raw * 360 / 32768 # Convert raw value to degrees #         
         return ((angle / 360) + revolutions) * self.baseLength
 
 
@@ -81,19 +80,19 @@ class MinimalPublisher(Node):
         #EncoderA
         angleA = self.encoderA.read_register(17, 0)
         revA = self.encoderA.read_register(18, 0)
-        val.append(angleA) 
-        val.append(revA)  
+        val.append(float(angleA)) 
+        val.append(float(revA))
         val.append(self.encToAngle(angleA, revA))
         #EncoderB
         angleB = self.encoderB.read_register(17, 0)
         revB = self.encoderB.read_register(18, 0)
-        val.append(angleB) 
-        val.append(revB)  
+        val.append(float(angleB)) 
+        val.append(float(revB))  
         val.append(self.encToAngle(angleB, revB))
         return val
 
     def timer_callback(self):
-        msg = Int64MultiArray()
+        msg = Float64MultiArray()
 
         msg.data = self.calDistance()
 
