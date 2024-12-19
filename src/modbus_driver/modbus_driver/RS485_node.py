@@ -68,7 +68,7 @@ class MinimalPublisher(Node):
         print("Encoder unlocked successfully.")
 
         instrument.write_register(register, payload, functioncode=6) 
-        print(f'{regName' successfully set to {int(payload,16)}')
+        print(f'{regName} successfully set to {int(payload,16)}')
         print(instrument.read_register(register, functioncode=3))
 
     def encToAngle(self, angle, revolutions):
@@ -76,20 +76,20 @@ class MinimalPublisher(Node):
         return ((angle / 360) + revolutions) * self.baseLength
 
 
-    def self.calDistance(self)
+    def calDistance(self):
         val = []
         #EncoderA
         angleA = self.encoderA.read_register(17, 0)
         revA = self.encoderA.read_register(18, 0)
         val.append(angleA) 
         val.append(revA)  
-        val.append(self.encToAngle(angleA, revA)
+        val.append(self.encToAngle(angleA, revA))
         #EncoderB
         angleB = self.encoderB.read_register(17, 0)
         revB = self.encoderB.read_register(18, 0)
         val.append(angleB) 
         val.append(revB)  
-        val.append(self.encToAngle(angleB, revB)
+        val.append(self.encToAngle(angleB, revB))
         return val
 
     def timer_callback(self):
