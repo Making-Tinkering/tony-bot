@@ -47,7 +47,7 @@ class MinimalPublisher(Node):
         print("Encoder unlocked successfully.")
 
         angle_register = 0x0011
-        angle_value = 0x0010  # Value for 0°
+        angle_value = 0x0064  # Value for 0°
         instrument.write_register(angle_register, angle_value, functioncode=6) 
         print('Angle successfully set to 0')
         print(instrument.read_register(angle_register, functioncode=3))
